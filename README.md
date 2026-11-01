@@ -6,7 +6,7 @@ This machine learning application takes as input client data for credit card hol
 
 The input is 30000 records of credit card holders of a bank. For each customer 23 features are specified and then there is prediction if customer will default in the next month payment.
 
-The application splits the given data into train and test data and trains the following models using the training data.
+The application splits the given data into train and test data. Training script trains and saves the models, and the Streamlit web app only loads them. Following models are trained:
 
 1. Logistic Regression
 2. Decision Tree Classifier
@@ -59,21 +59,21 @@ Then we create a web based application which is hosted on Streamlit. The input t
 
 The output below is taken from running the Streamlit app on the test data (`test_data.csv`, 6,000 rows):
 
-| ML Model Name       | Accuracy | AUC   | Precision | Recall | F1    | MCC   |
-|---------------------|----------|-------|-----------|--------|-------|-------|
-| Logistic Regression | 0.811    | 0.724 | 0.723     | 0.236  | 0.356 | 0.337 |
-| Decision Tree       | 0.813    | 0.754 | 0.630     | 0.374  | 0.469 | 0.383 |
-| KNN                 | 0.808    | 0.734 | 0.629     | 0.325  | 0.428 | 0.353 |
-| Naive Bayes         | 0.376    | 0.688 | 0.248     | 0.894  | 0.388 | 0.128 |
-| Support Vector Machine | 0.816 | 0.720 | 0.671     | 0.327  | 0.440 | 0.377 |
+| ML Model Name          | Accuracy | AUC   | Precision | Recall | F1    | MCC   |
+|------------------------|----------|-------|-----------|--------|-------|-------|
+| Logistic Regression    | 0.811    | 0.724 | 0.723     | 0.236  | 0.356 | 0.337 |
+| Decision Tree          | 0.813    | 0.754 | 0.630     | 0.374  | 0.469 | 0.383 |
+| KNN                    | 0.808    | 0.734 | 0.629     | 0.325  | 0.428 | 0.353 |
+| Naive Bayes            | 0.376    | 0.688 | 0.248     | 0.894  | 0.388 | 0.128 |
+| Support Vector Machine | 0.816    | 0.720 | 0.671     | 0.327  | 0.440 | 0.377 |
 
 ### Observation on performance of each model on the credit card dataset
 
 | ML Model Name | Observation about model performance |
 |---|---|
-| **Logistic Regression** | Highest precision (0.723): when it predicts a default it is usually right. But it has the lowest recall (0.236), missing about 3 in 4 actual defaulters. As a linear model it cannot capture the step-like effect of the repayment-status features, and the default 0.5 threshold is too strict for a 22% minority class. Accuracy (0.811) is barely above the 0.779 "always predict no default" baseline. |
-| **Decision Tree** | Best AUC (0.754), F1 (0.469) and MCC (0.383), giving the best balance between catching defaulters and avoiding false alarms. Trees naturally learn threshold rules such as "recent payment delayed by 2+ months means high risk", which suit this data. Limiting the depth to 6 prevented overfitting, and training took under a second. |
-| **KNN** | Consistently mid-table (AUC 0.734, F1 0.428, MCC 0.353). Distance-based classification weakens with 23 features and heavily skewed amount columns, even after scaling. It is fast to "train" since it only stores the data, but slow at prediction because each test row is compared with all 24,000 training rows. |
-| **Naive Bayes** | The outlier: accuracy collapses to 0.376 because it predicts "default" for most clients, giving the highest recall (0.894) but the lowest precision (0.248). Its independence assumption is badly violated (the six bill amounts and the six repayment statuses are strongly correlated), and the Gaussian assumption does not fit the skewed amounts. AUC of 0.688 shows its ranking is still somewhat informative, but its probabilities are poorly calibrated. Lowest MCC (0.128). |
-| **Support Vector Machine** | Highest accuracy (0.816) and second-best MCC (0.377), close to the Decision Tree. But it has the lowest AUC (0.720) and a recall of only 0.327, and it was by far the slowest to train (about 50 s versus under 1 s for the others), because kernel SVMs scale poorly with the number of rows. |
-| **Overall, Winner for your dataset?** | Decision Tree. It leads on the three metrics that matter most for imbalanced data (AUC, F1, MCC) and is fast and interpretable. The SVM comes close on MCC and accuracy but at far higher training cost; accuracy alone would have misleadingly made the SVM look best. Recall is low for every model except Naive Bayes; class weighting or a lower decision threshold could raise it, at the cost of some precision. |
+| **Logistic Regression** | The Logistic Regression model gives the highest precision of 0.723, which means that when it predicts a client will default, the prediction is usually correct. However, it has the lowest recall of 0.236, which means it fails to identify many actual default cases. Since Logistic Regression is a linear model, it cannot properly capture the sudden changes in default risk associated with different repayment statuses. Also, the default threshold of 0.5 may be too high when only 22% of clients belong to the default class. Its accuracy of 0.811 is only slightly better than the baseline accuracy of 0.779, which can be achieved by simply predicting that no client will default. |
+| **Decision Tree** | The decision tree has the best AUC of **0.754**, F1 of **0.469** and MCC of **0.383**. This kind of gives the best balance between catching defaulters and avoiding false alarms. Decision trees naturally learn threshold rules such as "recent payment delayed by 2+ months means high risk", which suit this data. Limiting the depth to 6 prevented overfitting, and training took under a second. |
+| **KNN** | The model gives average performance (AUC 0.734, F1 0.428, MCC 0.353). Since there are 23 features and the amount columns are highly skewed, distance-based classification does not work very well even after scaling. Training is fast because the model only stores the training data. However, prediction is slow because each test sample needs to be compared with all 24,000 training samples. |
+| **Naive Bayes** | The model performs poorly with an accuracy of only 0.376 because it predicts "default" for most clients. As a result, recall is very high (0.894), but precision is very low (0.248). The model assumes that all features are independent, which is not true in this dataset because the six bill amounts and six repayment statuses are strongly correlated. Also, the amount columns are highly skewed and do not follow a Gaussian distribution. Although the AUC is 0.688, which indicates some ability to distinguish between classes, the predicted probabilities are not very reliable. The model also has the lowest MCC of 0.128. |
+| **Support Vector Machine** | The model gives the highest accuracy (0.816) and second-highest MCC (0.377), which is close to the Decision Tree. However, it has the lowest AUC (0.720) and a low recall of 0.327, which means it fails to identify many actual default cases. Training is also very slow, taking around 50 seconds compared to less than 1 second for the other models. This is because kernel-based SVMs become computationally expensive when the number of training samples increases. |
+| **Overall, Winner for your dataset?** | Overall, the Decision Tree is the best performing model because it gives the highest AUC, F1 score and MCC, which are important metrics for imbalanced datasets. It is also fast to train and easy to interpret. The SVM performs almost as well in terms of MCC and gives higher accuracy, but its training time is much higher. This also shows why accuracy alone should not be used to select the best model, especially for imbalanced data. Except for Naive Bayes, all models have low recall, which means they fail to identify many actual default cases. Recall can be improved by using class weights or reducing the decision threshold, but this may also reduce precision. |
